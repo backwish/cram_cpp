@@ -7,6 +7,11 @@
 #include <algorithm>
 #include <iostream>
 
+class NaiveEncoder{    
+    void encode(){}
+    void decode(){}
+};
+
 template<typename code_t = uint64_t,typename ch_t = uint16_t,int alphabet_size = 65536>
 class HuffmanEncoder{
 public:       

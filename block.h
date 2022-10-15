@@ -14,6 +14,9 @@ class NaiveBlock{
 private:
     size_t block_size;
     std::vector<T> block_vec;
+    std::vector<T>& get(){
+        return std::ref(block_vec);
+    }
 public:    
     NaiveBlock() = default;
     explicit NaiveBlock(int size) : block_size(size),block_vec(size){};
@@ -24,10 +27,8 @@ public:
     NaiveBlock(NaiveBlock<T,Ch>&&) noexcept = default;
     NaiveBlock& operator=(NaiveBlock<T,Ch>&&) noexcept = default;
     
-    std::vector<T>& get(){
-        return std::ref(block_vec);
-    }
-    T at(size_t pos) const {
+    
+    T at(size_t pos,const auto& encoder) const {
         if constexpr(DEBUG){
             assert(pos>=0 && pos<block_size);
         }
@@ -38,11 +39,11 @@ public:
         return block_size;
     }
 
-    void replace(size_t pos,const Ch& ch){
+    void replace(size_t pos,const Ch& ch,const auto& encoder){
         if constexpr(DEBUG) assert(pos < block_size);
         block_vec[pos] = ch;
     }
-    void insert(size_t pos,const Ch& ch){
+    void insert(size_t pos,const Ch& ch,const auto& encoder){
         /*insert before pos
         block = [2,3,4,5,6]
         block.insert(0,11) => [11,2,3,4,5,6]*/
@@ -50,7 +51,7 @@ public:
         block_vec.insert(block_vec.begin()+pos,ch);
         ++block_size;
     }
-    void erase(size_t pos){
+    void erase(size_t pos,const auto& encoder){
         /*erase curr pos
         block = [2,3,4,5,6]
         block.erase(2) => [2,4,5,6]*/
@@ -58,18 +59,18 @@ public:
         block_vec.erase(block_vec.begin()+pos);
         --block_size;
     }
-    void merge(NaiveBlock<T,Ch>& rhs){
-        /*merge two blocks to curr
+    /*void merge(NaiveBlock<T,Ch>& rhs,const auto& left_encoder,const auto& right_encoder){
+        merge two blocks to curr
         curr = [1,2,3,4] rhs = [11,22,33,44]
-        curr.merge(rhs) => [1,2,3,4,11,22,33,44]*/
+        curr.merge(rhs) => [1,2,3,4,11,22,33,44]
         block_vec.insert(block_vec.end(),rhs.get().begin(),rhs.get().end());
         block_size += rhs.block_vec.size();
-    }
-    void merge(auto rhs_unique_ptr){                
+    }*/
+    void merge(auto rhs_unique_ptr,const auto& left_encoder,const auto& right_encoder){                
         block_vec.insert(block_vec.end(),rhs_unique_ptr->get().begin(),rhs_unique_ptr->get().end());
-        block_size += rhs_unique_ptr->block_vec.size();
+        block_size += rhs_unique_ptr->size();
     }
-    auto split(size_t pos){
+    auto split(size_t pos,const auto& encoder){
         /*split curr into two blocks
         block = [1,2,3,4,5]
         block.split(2) => [1,2] [3,4,5]*/
@@ -165,26 +166,33 @@ public:
         block_vec = encode_block(decoded,encoder);        
     }
     void insert(size_t pos,const Ch& ch,const auto& encoder){        
-        if constexpr(DEBUG) assert(pos <= block_size);
-        ++block_size;
+        if constexpr(DEBUG) assert(pos <= block_size);        
         auto decoded = decode_block(block_vec,block_size,encoder);
         decoded.insert(decoded.begin()+pos,ch);
         block_vec = encode_block(decoded,encoder);        
+        ++block_size;
     }
     void erase(size_t pos,const auto& encoder){        
-        if constexpr(DEBUG) assert(pos < block_size);
-        --block_size;
+        if constexpr(DEBUG) assert(pos < block_size);        
         auto decoded = decode_block(block_vec,block_size,encoder);
         decoded.erase(decoded.begin()+pos);
-        block_vec = encode_block(decoded,encoder);                
+        block_vec = encode_block(decoded,encoder);   
+        --block_size;             
     }
-    void merge(HuffmanBlock<T,Ch,U>& rhs,const auto& left_encoder,const auto& right_encoder){
+    void merge(auto rhs_unique_ptr,const auto& left_encoder,const auto& right_encoder){
+        auto decoded_left = decode_block(block_vec,block_size,left_encoder);
+        auto decoded_right = rhs_unique_ptr->get(right_encoder);        
+        block_size+=decoded_right.size();        
+        decoded_left.insert(decoded_left.end(),decoded_right.begin(),decoded_right.end());
+        block_vec = encode_block(decoded_left,left_encoder);
+    }
+    /*void merge(HuffmanBlock<T,Ch,U>& rhs,const auto& left_encoder,const auto& right_encoder){
         auto decoded_left = decode_block(block_vec,block_size,left_encoder);
         auto decoded_right = rhs.get(right_encoder);
         block_size+=decoded_right.size();        
         decoded_left.insert(decoded_left.end(),decoded_right.begin(),decoded_right.end());
         block_vec = encode_block(decoded_left,left_encoder);
-    }
+    }*/
     auto split(size_t pos,const auto& encoder){        
         if constexpr(DEBUG) assert(pos>0 && pos<block_size);
         size_t lsize = pos, rsize = block_size - pos;

@@ -11,6 +11,7 @@ class CRAM{
 public:
     using index_t = int;
     using block_t = HuffmanBlock<T,Ch>;
+    using encoder_t = HuffmanEncoder<>;
     CRAM() = delete;    
     explicit CRAM(const auto& text,const int rewrite_blocks_,const int H) : 
     freq(SIGMA,1),tree_num_vec(text.size()/(MAX_BLOCK_SIZE/2)),curr_tree(0),block_size(MAX_BLOCK_SIZE/2){                
@@ -20,9 +21,9 @@ public:
         for(const auto ch:text){
             freq[ch]++;
         }
-        encoders[0] = HuffmanEncoder<>(freq);
+        encoders[0] = encoder_t(freq);
         auto huffman_block_ptr_vec = make_huffman_blocks(text,encoders[0]);
-        da = Darray<T,Ch,block_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);        
+        da = Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);        
     }
     auto make_huffman_blocks(const auto& text,const auto& encoder){
         int n = text.size();
@@ -79,7 +80,7 @@ private:
     std::vector<int> freq;
     std::vector<uint8_t> tree_num_vec;
     HuffmanEncoder<> encoders[2];
-    Darray<T,Ch,block_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
+    Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
 };
 
 #endif
