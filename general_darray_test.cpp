@@ -151,16 +151,16 @@ void da_naiveblock_bulk_erase_test(){
 
 
 int main(){
-    cout<<"DA NAIVEBLOCK BULK INSERT TEST\n";
+    /*cout<<"DA NAIVEBLOCK BULK INSERT TEST\n";
     da_naiveblock_bulk_insert_test();
     cout<<"DA NAIVEBLOCK BULKD ERASE TEST\n";
-    da_naiveblock_bulk_erase_test();
-    /*cout<<"DA ERASE SMALL SIZE TEST\n";
+    da_naiveblock_bulk_erase_test();*/
+    cout<<"DA ERASE SMALL SIZE TEST\n";
     da_erase_small_test();    
     cout<<"DA INSERT SMALL SIZE TEST\n";
     da_insert_small_test();
     cout<<"DA ERASE LARGE SIZE TEST\n";
     da_erase_large_test();
     cout<<"DA INSERT LARGE SIZE TEST\n";
-    da_insert_large_test();*/
+    da_insert_large_test();
 }

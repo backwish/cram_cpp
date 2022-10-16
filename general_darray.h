@@ -27,8 +27,8 @@ public:
         rnode.size_vec.resize(rsize);rnode.size_psum_vec.resize(rsize);
         std::copy(size_vec.cbegin(),size_vec.cbegin()+lsize,lnode.size_vec.begin());
         std::copy(size_vec.cbegin()+lsize,size_vec.cend(),rnode.size_vec.begin());
-        std::partial_sum(lnode.size_vec.cbegin(),lnode.size_vec.cend(),lnode.size_psum_vec.begin());
-        std::partial_sum(rnode.size_vec.cbegin(),rnode.size_vec.cend(),rnode.size_psum_vec.begin());
+        std::inclusive_scan(lnode.size_vec.cbegin(),lnode.size_vec.cend(),lnode.size_psum_vec.begin());
+        std::inclusive_scan(rnode.size_vec.cbegin(),rnode.size_vec.cend(),rnode.size_psum_vec.begin());
         if(is_leaf){
             lnode.block_ptr_vec.insert(lnode.block_ptr_vec.end(),
             std::make_move_iterator(block_ptr_vec.begin()),std::make_move_iterator(block_ptr_vec.begin()+lsize));
@@ -45,7 +45,7 @@ public:
     void merge(std::unique_ptr<node_t> rhs){
         size_vec.insert(size_vec.end(),rhs->size_vec.begin(),rhs->size_vec.end());
         size_psum_vec.resize(size_vec.size());
-        std::partial_sum(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
+        std::inclusive_scan(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
         if(is_leaf){
             block_ptr_vec.insert(block_ptr_vec.end(),
             std::make_move_iterator(rhs->block_ptr_vec.begin()),
@@ -89,7 +89,7 @@ public:
                 block_ptr_vec.push_back(std::move(block_ptr));
             }
             if(last) size_vec.back()++;
-            std::partial_sum(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
+            std::inclusive_scan(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
             auto node = std::make_unique<node_t>(true);
             node->size_vec = std::move(size_vec);
             node->size_psum_vec = std::move(size_psum_vec);
@@ -111,7 +111,7 @@ public:
                     size_vec[j] = node_ptr->size_psum_vec.back();
                     child_vec.push_back(std::move(node_ptr));
                 }
-                std::partial_sum(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
+                std::inclusive_scan(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
                 auto node = std::make_unique<node_t>(false);
                 node->size_vec = std::move(size_vec);
                 node->size_psum_vec = std::move(size_psum_vec);

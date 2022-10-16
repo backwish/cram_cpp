@@ -71,5 +71,5 @@ int main(int argc,char **argv){
 
     cout<<"CRAM REPLACE TEST\n";
     int rewrite_blocks = 4;
-    cram_replace_test<code_t,data_t,0,1024,2048>(source,dest,rewrite_blocks,2);
+    cram_replace_test<code_t,data_t,2,1024,2048>(source,dest,rewrite_blocks,2);
 }

@@ -67,7 +67,7 @@ public:
         block_size += rhs.block_vec.size();
     }*/
     void merge(auto rhs_unique_ptr,const auto& left_encoder,const auto& right_encoder){                
-        block_vec.insert(block_vec.end(),rhs_unique_ptr->get().begin(),rhs_unique_ptr->get().end());
+        block_vec.insert(block_vec.end(),rhs_unique_ptr->get().cbegin(),rhs_unique_ptr->get().cend());
         block_size += rhs_unique_ptr->size();
     }
     auto split(size_t pos,const auto& encoder){

@@ -13,19 +13,26 @@ public:
     using block_t = HuffmanBlock<code_t,ch_t>;
     using encoder_t = HuffmanEncoder<>;
     using freq_t = int;
-    using index_t = int;
-    explicit Darray_Huffman(const auto& text,const int H) : freq(SIGMA,1){
+    using index_t = int;    
+    explicit Darray_Huffman(const auto& text,const int H,bool init) : freq(SIGMA,1){
         int n = text.size();
         for(const auto ch:text){ freq[ch]++; }
         huffman_encoder = encoder_t(freq);
-        auto huffman_block_ptr_vec = make_huffman_blocks(text,huffman_encoder);
-        da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);
+        if(init){
+            auto huffman_block_ptr_vec = make_huffman_blocks(text,huffman_encoder);
+            da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);
+        }else{
+            da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(H);
+        }
     }
     void insert(index_t pos,auto val){
         da.insert(pos,val,huffman_encoder);
     }
     void erase(index_t pos){
         da.erase(pos,huffman_encoder);
+    }
+    auto at(index_t pos) const{
+        return da.at(pos,huffman_encoder);
     }
     auto block_at(index_t pos) const{
         return da.block_at(pos,huffman_encoder);

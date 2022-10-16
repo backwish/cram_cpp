@@ -1,6 +1,7 @@
 #ifndef ENCODER_H_
 #define ENCODER_H_
 
+#include <optional>
 #include <map>
 #include <vector>
 #include <queue>
@@ -9,10 +10,7 @@
 #include <iostream>
 #include <cmath>
 
-class NaiveEncoder{    
-    void encode(){}
-    void decode(){}
-};
+class NaiveEncoder{};
 
 const int INF_LEN = 100;
 
@@ -25,11 +23,11 @@ public:
         std::transform(required_len.begin()+2,required_len.end(),required_len.begin()+2,
         [](auto val){return std::log2(val);});        
     }    
-    code_t allocateCode(int code_size){        
-        if(code_size < required_len[1]) return static_cast<code_t>(1);
+    auto allocateCode(int code_size){        
+        if(code_size < required_len[1]) return std::optional<code_t>();
         auto [code,pos] = findCodePos(code_size);
         recalcLength(pos);
-        return code;
+        return std::optional<code_t>(code);
     }
 private:
     inline int parent(int pos) const { return pos/2;}
@@ -218,7 +216,7 @@ private:
         return curr_node;
     }
     auto getDividePos(const auto& freq){
-        freq_t sum = std::accumulate(freq.begin(),freq.end(),static_cast<freq_t>(0));
+        freq_t sum = std::reduce(freq.begin(),freq.end(),static_cast<freq_t>(0));
         auto freq_copy = freq;
         std::partial_sum(freq_copy.begin(),freq_copy.end(),freq_copy.begin());
         auto threshold_it = std::find_if(freq_copy.begin(),freq_copy.end(),[sum](const auto val){return val > sum*2/3;});
@@ -260,10 +258,10 @@ public:
     bool insertCode(const ch_t ch,int code_size){
         static_assert(MODE>0,"NOT SUPPORTED MODE ON INSERT CODE");
         auto allocated_code = ca.allocateCode(code_size-2);
-        if(allocated_code==1) return false;        
+        if(!allocated_code) return false;        
         //clen_v[ch] = code_size;
-        code_v[ch] = allocated_code;
-        act.insert(allocated_code,ch,code_size);
+        code_v[ch] = allocated_code.value();
+        act.insert(code_v[ch],ch,code_size);
         return true;
     }
     auto encode(const ch_t ch) const {        
