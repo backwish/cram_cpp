@@ -129,17 +129,38 @@ void da_naiveblock_bulk_insert_test(){
         assert(text[i]==da.at(i,ne));
     }
 }
+void da_naiveblock_bulk_erase_test(){
+    const int N = 1000,B = 16,SB = 16,H = 4;
+    std::vector<int> text(N);
+    std::generate(text.begin(),text.end(),std::rand);
+    auto naive_blocks_ptr_vec = make_naive_blocks(text,B);
+    Darray<int,int,naiveblock_t,encoder_t,B,SB> da(std::move(naive_blocks_ptr_vec),H);
+    for(int i=0;i<N;++i){
+        int val = rand()%10000;
+        int pos = rand()%(text.size());        
+        text.erase(text.begin()+pos);        
+        da.erase(pos,ne);                
+        for(int j=0;j<text.size();++j){            
+            if(text[j]!=da.at(j,ne)){
+                std::cout<<"incorrect at random erase H: "<<H<<" B: "<<B<<" SB: "<<SB<<'\n';
+                assert(false);
+            }
+        }                
+    }
+}
 
 
 int main(){
-    /*cout<<"DA NAIVEBLOCK BULK INSERT TEST\n";
-    da_naiveblock_bulk_insert_test();*/
-    cout<<"DA ERASE SMALL SIZE TEST\n";
+    cout<<"DA NAIVEBLOCK BULK INSERT TEST\n";
+    da_naiveblock_bulk_insert_test();
+    cout<<"DA NAIVEBLOCK BULKD ERASE TEST\n";
+    da_naiveblock_bulk_erase_test();
+    /*cout<<"DA ERASE SMALL SIZE TEST\n";
     da_erase_small_test();    
     cout<<"DA INSERT SMALL SIZE TEST\n";
     da_insert_small_test();
     cout<<"DA ERASE LARGE SIZE TEST\n";
     da_erase_large_test();
     cout<<"DA INSERT LARGE SIZE TEST\n";
-    da_insert_large_test();
+    da_insert_large_test();*/
 }

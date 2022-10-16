@@ -78,7 +78,8 @@ public:
         da_size = n*BLOCK_SIZE;
         std::queue<std::unique_ptr<node_t>> node_queue;
         for(int i=0;i<n;i+=INTERNAL_BLOCK_SIZE){
-            auto internal_block_size = std::min(n-i,INTERNAL_BLOCK_SIZE);            
+            auto internal_block_size = std::min(n-i,INTERNAL_BLOCK_SIZE);  
+            bool last = n <= i+INTERNAL_BLOCK_SIZE;
             std::vector<index_t> size_vec(internal_block_size);
             std::vector<index_t> size_psum_vec(internal_block_size);
             std::vector<std::unique_ptr<block_t>> block_ptr_vec;            
@@ -86,7 +87,8 @@ public:
                 auto block_ptr = std::move(input_block_ptr_vec[i+j]);                
                 size_vec[j] = block_ptr->size();                
                 block_ptr_vec.push_back(std::move(block_ptr));
-            }            
+            }
+            if(last) size_vec.back()++;
             std::partial_sum(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
             auto node = std::make_unique<node_t>(true);
             node->size_vec = std::move(size_vec);

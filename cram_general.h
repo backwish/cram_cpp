@@ -6,15 +6,15 @@
 using std::cout;
 using std::cin;
 
-template<typename T,typename Ch,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024,int SIGMA = 65536>
+template<typename T,typename Ch,int MODE,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024,int SIGMA = 65536>
 class CRAM{
 public:
     using index_t = int;
     using block_t = HuffmanBlock<T,Ch>;
-    using encoder_t = HuffmanEncoder<>;
+    using encoder_t = HuffmanEncoder<T,Ch,MODE>;
     CRAM() = delete;    
     explicit CRAM(const auto& text,const int rewrite_blocks_,const int H) : 
-    freq(SIGMA,1),tree_num_vec(text.size()/(MAX_BLOCK_SIZE/2)),curr_tree(0),block_size(MAX_BLOCK_SIZE/2){                
+    freq(SIGMA,1),tree_num_vec(text.size()/(MAX_BLOCK_SIZE/2)),curr_tree(0),block_size(MAX_BLOCK_SIZE/2),existCodeSpace(true){                
         total_block_num = text.size()/block_size;
         rewrite_blocks = rewrite_blocks_;
         rewrite_pos = rewrite_blocks==0 ? 0 : (total_block_num)*(rewrite_blocks-1)/rewrite_blocks;        
@@ -22,6 +22,10 @@ public:
             freq[ch]++;
         }
         encoders[0] = encoder_t(freq);
+        if constexpr(0 < MODE){
+            pivotFreq.resize(SIGMA);
+            std::copy(freq.begin(),freq.end(),pivotFreq.begin());
+        }
         auto huffman_block_ptr_vec = make_huffman_blocks(text,encoders[0]);
         da = Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);        
     }
@@ -37,14 +41,31 @@ public:
         }
         return std::move(ret);
     }
+    void makeNewCode(const auto& vec){
+        if(!existCodeSpace) return;
+        auto inserted_ch_vec = vec;
+        std::sort(inserted_ch_vec.begin(),inserted_ch_vec.end());
+        inserted_ch_vec.erase(std::unique(inserted_ch_vec.begin(),inserted_ch_vec.end()),inserted_ch_vec.end());
+        for(const auto ch:inserted_ch_vec){
+            int candidate_len = std::log2(total_block_num*block_size/freq[ch]);
+            if(pivotFreq[ch]*2 < freq[ch] && candidate_len < 16){
+                existCodeSpace = encoders[curr_tree].insertCode(ch,candidate_len);
+                pivotFreq[ch] = freq[ch];
+            }            
+            if(!existCodeSpace) break;
+        }
+    }
     void replace(index_t block_index,const auto& vec){
         int prev_tree_index = tree_num_vec[block_index];
-        const auto curr_block = da.block_at(block_index*block_size,encoders[tree_num_vec[block_index]]);        
+        const auto curr_block = da.block_at(block_index*block_size,encoders[tree_num_vec[block_index]]);           
         for(const auto ch:vec){
             freq[ch]++;
         }
         for(const auto ch:curr_block){
             freq[ch]--;                        
+        }
+        if constexpr(0 < MODE){
+            makeNewCode(vec);
         }
         
         da.block_replace(block_index*block_size,vec,encoders[curr_tree]);        
@@ -59,7 +80,11 @@ public:
         if(rewrite_pos == total_block_num){                        
             rewrite_pos = 0;
             curr_tree^=1;            
-            encoders[curr_tree] = HuffmanEncoder<>(freq);                        
+            encoders[curr_tree] = encoder_t(freq);          
+            if constexpr(0 < MODE){
+                pivotFreq = freq;
+                existCodeSpace = true;
+            }        
         }
     }
     auto get_block(index_t block_index){
@@ -76,10 +101,12 @@ private:
     index_t rewrite_pos;    
     index_t block_size;
     uint8_t curr_tree;
+    bool existCodeSpace;
 
     std::vector<int> freq;
+    std::vector<int> pivotFreq;
     std::vector<uint8_t> tree_num_vec;
-    HuffmanEncoder<> encoders[2];
+    encoder_t encoders[2];
     Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
 };
 
