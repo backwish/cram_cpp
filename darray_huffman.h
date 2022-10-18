@@ -40,6 +40,9 @@ public:
     auto size() const{
         return da.size();
     }
+    auto getBlockInsertEraseTime() const{
+        return da.getBlockInsertEraseTime();
+    }
 
 
 private:

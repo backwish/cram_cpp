@@ -13,7 +13,7 @@ using freq_t = int;
 const int SIGMA = 65536;
 
 template<typename T,typename Ch,int MODE,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
-void cram_replace_test(const auto& source,const auto& dest,const int rewrite_blocks,const int H){
+auto cram_replace_test(const auto& source,const auto& dest,const int rewrite_blocks,const int H){
     assert(source.size()%(MAX_BLOCK_SIZE/2) == 0);
     cout<<"CRAM BUILD START\n";
     CRAM<T,Ch,MODE,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> cram(source,rewrite_blocks,H);
@@ -26,13 +26,18 @@ void cram_replace_test(const auto& source,const auto& dest,const int rewrite_blo
     }
     const int block_num = replace_data.size();
     //const int block_num = 1;
+    std::vector<double> ret;
 
     auto start = steady_clock::now();
-    cout<<"PROGRESS: "<<0<<" CRAM USE BPC: "<<cram.get_bpc()<<'\n';
+    auto [node_bpc,block_bpc] = cram.get_bpc();
+    cout<<"PROGRESS: "<<0<<" CRAM NODE BPC: "<<node_bpc<<"CRAM BLOCK BPC: "<<block_bpc<<'\n';
+    ret.push_back(node_bpc+block_bpc);
     for(int i=0;i<block_num;++i){        
         cram.replace(i,replace_data[i]);
         if((i+1)%(block_num/10)==0){
-            cout<<"PROGRESS: "<<(i+1)/(block_num/10)*10<<" CRAM USE BPC: "<<cram.get_bpc()<<'\n';
+            auto [node_bpc,block_bpc] = cram.get_bpc();
+            cout<<"PROGRESS: "<<(i+1)/(block_num/10)*10<<" CRAM NODE BPC: "<<node_bpc<<"CRAM BLOCK BPC: "<<block_bpc<<'\n';            
+            ret.push_back(node_bpc+block_bpc);
         }
     }
     auto end = steady_clock::now();
@@ -50,6 +55,7 @@ void cram_replace_test(const auto& source,const auto& dest,const int rewrite_blo
             //assert(dest_block[j]==cram_block[j]);
         }
     }
+    return ret;
 }
 
 int main(int argc,char **argv){
@@ -69,7 +75,25 @@ int main(int argc,char **argv){
     is_dest.read((char*) &dest[0], size);
     is_dest.close();
 
+    std::ofstream out("test.csv");
     cout<<"CRAM REPLACE TEST\n";
-    int rewrite_blocks = 4;
-    cram_replace_test<code_t,data_t,2,1024,2048>(source,dest,rewrite_blocks,2);
+
+
+    int rewrite_blocks = 4;        
+    for(int rewrite_blocks=4;rewrite_blocks>=1;rewrite_blocks/=2){
+        auto ret = cram_replace_test<code_t,data_t,0,1024,2048>(source,dest,rewrite_blocks,2);
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    for(int rewrite_blocks=4;rewrite_blocks>=1;rewrite_blocks/=2){
+        auto ret = cram_replace_test<code_t,data_t,1,1024,2048>(source,dest,rewrite_blocks,2);
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    for(int rewrite_blocks=4;rewrite_blocks>=1;rewrite_blocks/=2){
+        auto ret = cram_replace_test<code_t,data_t,2,1024,2048>(source,dest,rewrite_blocks,2);
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    
 }
