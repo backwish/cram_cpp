@@ -18,9 +18,8 @@ public:
         int n = text.size();
         for(const auto ch:text){ freq[ch]++; }
         huffman_encoder = encoder_t(freq);
-        if(init){
-            auto huffman_block_ptr_vec = make_huffman_blocks(text,huffman_encoder);
-            da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);
+        if(init){            
+            da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,huffman_encoder,H);
         }else{
             da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(H);
         }

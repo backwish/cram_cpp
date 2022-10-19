@@ -116,7 +116,8 @@ void darray_huffman_insert_test(const auto& source){
     correctness_check(da,raw_vector,MAX_BLOCK_SIZE);
     std::cout<<"CORRECTNESS CHECK END\n";
 }
-/*void darray_huffman_erase_test(const auto& source){
+template<int MAX_BLOCK_SIZE,int MAX_INTERNAL_BLOCK_SIZE,int H>
+void darray_huffman_erase_test(const auto& source){
     Darray_Huffman<MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,H,true);
     std::vector<data_t> raw_vector(source.size());
     std::copy(source.begin(),source.end(),raw_vector.begin());    
@@ -131,24 +132,8 @@ void darray_huffman_insert_test(const auto& source){
         erase_time+=duration_cast<nanoseconds> (erase_end - erase_start).count();        
         //std::cout<<da.size()<<','<<erase_pos<<'\n';
     }    
-    std::cout<<"ERASE TIME: "<<erase_time<<'\n';
-    std::cout<<"CORRECTNESS CHECK\n";
-    int pos = 0;
-    while(pos < da.size()){
-        auto da_block = da.block_at(pos);
-        int block_size = da_block.size();
-        assert(block_size < MAX_BLOCK_SIZE);
-        std::vector<data_t> raw_block(block_size);
-        std::copy(raw_vector.begin()+pos,raw_vector.begin()+(pos+block_size),raw_block.begin());
-        for(int j=0;j<block_size;++j){
-            if(da_block[j]!=raw_block[j]){
-                std::cout<<pos<<','<<j<<'\n';
-                assert(false);
-            }            
-        }
-        pos+=block_size;
-    }
-}*/
+    std::cout<<"ERASE TIME: "<<erase_time<<'\n';    
+}
 
 
 int main(int argc,char **argv){
@@ -182,8 +167,9 @@ int main(int argc,char **argv){
     std::vector<data_t> mini_source(mini_source_size);
     std::copy(source.begin(),source.begin()+mini_source_size,mini_source.begin());
     darray_huffman_insert_test<64,2048,2>(mini_source);    
+    darray_huffman_erase_test<64,2048,2>(mini_source);
     //darray_huffman_insert_erase_test<1024,2048,1>(mini_source);
-    //darray_huffman_insert_erase_test<1024,2048,2>(mini_source);
+    darray_huffman_insert_erase_test<1024,2048,2>(mini_source);
     //darray_huffman_insert_erase_test<1024,64,4>(mini_source);    
     //darray_huffman_insert_erase_test<1024,16,6>(mini_source);    
 }

@@ -18,7 +18,7 @@ private:
         return std::ref(block_vec);
     }
 public:    
-    NaiveBlock() = default;
+    NaiveBlock() : block_size(0){}
     explicit NaiveBlock(int size) : block_size(size),block_vec(size){};
     explicit NaiveBlock(std::vector<T>& block) : block_size(block.size()),block_vec(block){}
     explicit NaiveBlock(std::vector<T>&& block) : block_size(block.size()),block_vec(block){}
@@ -94,12 +94,11 @@ private:
 public:    
     HuffmanBlock() = default;    
     auto encode_block(const auto& block,const auto& encoder) const {
-        std::vector<T> ret;
+        std::vector<T> ret;        
         int total_size = std::transform_reduce(block.begin(),block.end(),0,std::plus{},
         [&encoder](const auto& ch){return encoder.encode(ch).second;});        
         int comp_pos = 0,encoded_blocks = 0;      
-        const int block_bits = sizeof(T)*8;  
-        //ret.resize((total_size+block_bits-1)/block_bits+1,static_cast<T>(0));
+        const int block_bits = sizeof(T)*8;          
         ret.resize((total_size+block_bits-1)/block_bits,static_cast<T>(0));
         const int n = ret.size();
         for(auto ch:block){
@@ -116,6 +115,7 @@ public:
     }
     auto decode_block(const auto& comp_block,const int block_size,const auto& encoder) const {
         std::vector<Ch> ret;        
+        if(block_size==0) return ret;
         ret.resize(block_size);
         auto comp_block_iter = comp_block.begin();int comp_pos = 0;
         const int block_bits = sizeof(T)*8;
