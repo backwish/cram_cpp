@@ -46,7 +46,7 @@ public:
 
 
 private:
-    auto make_huffman_blocks(const auto& text,const auto& encoder){
+    /*auto make_huffman_blocks(const auto& text,const auto& encoder){
         int n = text.size();
         const int block_size = MAX_BLOCK_SIZE/2;
         std::vector<std::unique_ptr<block_t>> ret;
@@ -58,7 +58,7 @@ private:
             ret.push_back(std::move(block_ptr));
         }
         return std::move(ret);
-    }
+    }*/
     std::vector<freq_t> freq;
     encoder_t huffman_encoder;
     Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;

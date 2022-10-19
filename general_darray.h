@@ -81,7 +81,8 @@ class Darray{
 public:
     using index_t = int;
     using node_t = Node<T,Ch,index_t,block_t>;
-    Darray(std::vector<std::unique_ptr<block_t>> input_block_ptr_vec,const int H) : da_size(0),insert_time(0),erase_time(0){        
+    Darray(const auto& text,const auto& encoder,const int H) : da_size(0),insert_time(0),erase_time(0){                
+        auto input_block_ptr_vec = make_blocks(text,encoder);
         const int n = input_block_ptr_vec.size();        
         const index_t INTERNAL_BLOCK_SIZE = H==1 ? n : MAX_INTERNAL_BLOCK_SIZE/2;
         const index_t BLOCK_SIZE = MAX_BLOCK_SIZE/2;
@@ -98,7 +99,7 @@ public:
                 size_vec[j] = block_ptr->size();                
                 block_ptr_vec.push_back(std::move(block_ptr));
             }
-            if(last) size_vec.back()++;
+            //if(last) size_vec.back()++;
             std::inclusive_scan(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
             auto node = std::make_unique<node_t>(true);
             node->size_vec = std::move(size_vec);
@@ -146,16 +147,21 @@ public:
     
     //method for fixed-size CRAM
     auto block_at(index_t pos,const auto& encoder) const {
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
+        auto [node_stack,child_pos_stack,block_pos,last_block] = getPos(pos);
         auto leaf = node_stack.top();
         auto leaf_pos = child_pos_stack.top();
-        return leaf->block_ptr_vec[leaf_pos]->get(encoder);
+        auto ret = leaf->block_ptr_vec[leaf_pos]->get(encoder);
+        if(last_block) ret.pop_back();
+        return ret;
     }
     auto block_replace(index_t pos,const auto& vec,const auto& encoder){
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
+        auto [node_stack,child_pos_stack,block_pos,last_block] = getPos(pos);
         auto leaf = node_stack.top();
         auto leaf_pos = child_pos_stack.top();
-        leaf->block_ptr_vec[leaf_pos]->replace_block(vec,encoder);
+        auto modify_vec = vec;
+        if(last_block) modify_vec.push_back(0);
+        const auto input_vec = modify_vec;
+        leaf->block_ptr_vec[leaf_pos]->replace_block(input_vec,encoder);
     }
     //end methods
     auto get_bpc() const {
@@ -185,13 +191,13 @@ public:
         return std::make_pair(node_bpc,block_bpc);
     }
     auto at(index_t pos,const auto& encoder) const{
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
+        auto [node_stack,child_pos_stack,block_pos,last_block] = getPos(pos);
         auto leaf = node_stack.top();
         auto leaf_pos = child_pos_stack.top();
         return leaf->block_ptr_vec[leaf_pos]->at(block_pos,encoder);        
     }
     void insert(index_t pos,auto val,const auto& encoder){
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
+        auto [node_stack,child_pos_stack,block_pos,last_block] = getPos(pos);
         auto leaf = node_stack.top();
         auto leaf_pos = child_pos_stack.top();
         auto insert_start = steady_clock::now();
@@ -223,7 +229,7 @@ public:
         ++da_size;
     }    
     void erase(index_t pos,const auto& encoder){
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
+        auto [node_stack,child_pos_stack,block_pos,last_block] = getPos(pos);
         auto leaf = node_stack.top();
         auto leaf_pos = child_pos_stack.top();
         auto erase_start = steady_clock::now();        
@@ -296,15 +302,31 @@ public:
     }
     
 private:
+    auto make_blocks(const auto& text,const auto& encoder) const{
+        const int n = text.size();
+        const int block_size = MAX_BLOCK_SIZE/2;
+        std::vector<std::unique_ptr<block_t>> ret;
+        for(int i=0;i<n;i+=block_size){
+            int curr_block_size = std::min(n-i,block_size);
+            std::vector<Ch> curr_block(curr_block_size);
+            std::copy(text.begin()+i,text.begin()+(i+curr_block_size),curr_block.begin());
+            if(i+block_size>=n) curr_block.push_back(0);
+            auto block_ptr = std::make_unique<block_t>(std::move(curr_block),encoder);
+            ret.push_back(std::move(block_ptr));
+        }
+        return std::move(ret);
+    }
     auto getPos(index_t total_pos) const {
         node_t *curr = root.get();
         int block_pos = -1;
+        bool last_block = true;
         std::stack<node_t*> node_stack;
         std::stack<index_t> child_pos_stack;
         while(true){
             auto psum_block_it = std::upper_bound(curr->size_psum_vec.cbegin(),curr->size_psum_vec.cend(),total_pos);
             auto pos = std::distance(curr->size_psum_vec.cbegin(),psum_block_it);
-            auto offset = pos==0 ? 0 : curr->size_psum_vec[pos-1];            
+            auto offset = pos==0 ? 0 : curr->size_psum_vec[pos-1];  
+            last_block &= std::next(psum_block_it) == curr->size_psum_vec.cend();
             total_pos-=offset;
             node_stack.push(curr);
             child_pos_stack.push(pos);            
@@ -316,7 +338,7 @@ private:
             }
         }        
         assert(block_pos>=0);
-        return std::make_tuple(std::move(node_stack),std::move(child_pos_stack),block_pos);
+        return std::make_tuple(std::move(node_stack),std::move(child_pos_stack),block_pos,last_block);
     }
     void splitDataBlock(auto leaf,index_t leaf_pos,const auto& encoder){
         index_t left_size = MAX_BLOCK_SIZE/2+1,right_size = leaf->block_ptr_vec[leaf_pos]->size() - left_size;

@@ -97,34 +97,39 @@ public:
         std::vector<T> ret;
         int total_size = std::transform_reduce(block.begin(),block.end(),0,std::plus{},
         [&encoder](const auto& ch){return encoder.encode(ch).second;});        
-        int comp_pos = 0,encoded_blocks = 0;        
-        ret.resize((total_size+sizeof(T)*8-1)/(sizeof(T)*8)+1,static_cast<T>(0));
+        int comp_pos = 0,encoded_blocks = 0;      
+        const int block_bits = sizeof(T)*8;  
+        //ret.resize((total_size+block_bits-1)/block_bits+1,static_cast<T>(0));
+        ret.resize((total_size+block_bits-1)/block_bits,static_cast<T>(0));
+        const int n = ret.size();
         for(auto ch:block){
             auto [code,len] = encoder.encode(ch);                   
-            auto block_index = comp_pos/64;
-            auto block_offset = comp_pos%64;
-            auto remain = block_offset+static_cast<int>(len)-64;
+            auto block_index = comp_pos/block_bits;
+            auto block_offset = comp_pos%block_bits;
+            auto remain = block_offset+static_cast<int>(len)-block_bits;
             ret[block_index] |= (code>>block_offset);
-            ret[block_index+1] |= remain > 0 ? (code<<(static_cast<int>(len)-remain)) : static_cast<T>(0);
+            if(block_index+1 < n)
+                ret[block_index+1] |= remain > 0 ? (code<<(static_cast<int>(len)-remain)) : static_cast<T>(0);
             comp_pos+=len;
         }
         return ret;
     }
-    auto decode_block(const auto& comp_block,int block_size,const auto& encoder) const {
+    auto decode_block(const auto& comp_block,const int block_size,const auto& encoder) const {
         std::vector<Ch> ret;        
         ret.resize(block_size);
         auto comp_block_iter = comp_block.begin();int comp_pos = 0;
-        T curr_code = *comp_block_iter,next_code = *std::next(comp_block_iter);
-        for(int i=0;i<ret.size();++i){
-            auto block_index = comp_pos/64;
-            auto block_offset = comp_pos%64;            
+        const int block_bits = sizeof(T)*8;
+        T curr_code = *comp_block_iter,next_code = (next(comp_block_iter) == comp_block.end() ? 0 : *std::next(comp_block_iter));
+        for(int i=0;i<block_size;++i){
+            auto block_index = comp_pos/block_bits;
+            auto block_offset = comp_pos%block_bits;            
             auto code = curr_code<<block_offset;        
-            code |= (next(comp_block_iter) == comp_block.end() || block_offset==0 ? 0 : next_code>>(64 - block_offset));
+            code |= (next(comp_block_iter) == comp_block.end() || block_offset==0 ? 0 : next_code>>(block_bits - block_offset));
             auto [ch,len] = encoder.decode(code);
             comp_pos += len;
-            std::advance(comp_block_iter,comp_pos/64==block_index ? 0 : 1);
-            curr_code = comp_pos/64==block_index ? curr_code : next_code;
-            next_code = comp_pos/64==block_index ? next_code : (next(comp_block_iter) == comp_block.end() ? 0 : *next(comp_block_iter));
+            std::advance(comp_block_iter,comp_pos/block_bits==block_index ? 0 : 1);
+            curr_code = comp_pos/block_bits==block_index ? curr_code : next_code;
+            next_code = comp_pos/block_bits==block_index ? next_code : (next(comp_block_iter) == comp_block.end() ? 0 : *next(comp_block_iter));
             ret[i] = ch;            
         }
         return ret;

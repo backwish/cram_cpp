@@ -89,7 +89,7 @@ public:
         tbl_extended_t code_for_search{code,0,0};
         auto code_it = std::prev(std::upper_bound(tbl.begin(),tbl.end(),code_for_search));   
         //assert((((code_it->code)^code)&(code_it->code)) == 0);
-        int shift_len = 64 - code_it->len;
+        int shift_len = sizeof(code_t)*8 - code_it->len;
         //std::cout<<"    curr code: "<<getBaseTwo(code,code_it->len)<<'\n';
         //std::cout<<" decoded code: "<<getBaseTwo(code_it->code,code_it->len)<<" ch: "<<code_it->ch<<" len: "<<static_cast<int>(code_it->len)<<'\n';
         //assert(((code_it->code)>>shift_len) == (code>>shift_len));        
@@ -98,7 +98,7 @@ public:
 private:
     std::string getBaseTwo(code_t code,int len) const {
         std::string ret;
-        code>>=(64 - len);
+        code>>=(sizeof(code_t)*8 - len);
         for(int i=0;i<len;++i){
             ret+=(((code>>i)&1)==1 ? '1' : '0');
         }
@@ -122,7 +122,7 @@ template<typename code_t = uint64_t,typename ch_t = uint16_t,int MODE = 0,int al
 class HuffmanEncoder{
 public:       
     using clen_t = uint8_t;    
-    using tbl_t = uint64_t;    
+    using tbl_t = code_t;    
     using freq_t = uint64_t;
     
 private:

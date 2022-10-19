@@ -25,9 +25,8 @@ public:
         if constexpr(0 < MODE){
             pivotFreq.resize(SIGMA);
             std::copy(freq.begin(),freq.end(),pivotFreq.begin());
-        }
-        auto huffman_block_ptr_vec = make_huffman_blocks(text,encoders[0]);
-        da = Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(std::move(huffman_block_ptr_vec),H);        
+        }        
+        da = Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,encoders[0],H);        
     }
     auto make_huffman_blocks(const auto& text,const auto& encoder){
         int n = text.size();
