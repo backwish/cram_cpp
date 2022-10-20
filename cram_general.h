@@ -89,6 +89,13 @@ public:
     auto get_block(index_t block_index){
         return da.block_at(block_index*block_size,encoders[tree_num_vec[block_index]]);
     }
+    auto get_entropy() const{
+        const int n = da.size()+SIGMA;
+        return std::transform_reduce(freq.begin(),freq.end(),static_cast<double>(0),std::plus{},[n](const auto f){
+            const auto p = static_cast<double>(f)/n;
+            return -std::log2(p)*p;
+        })/2;
+    }
     auto get_bpc()const{
         return da.get_bpc();
     }

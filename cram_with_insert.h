@@ -14,7 +14,7 @@ public:
     using encoder_t = HuffmanEncoder<T,Ch,MODE>;
     CRAM() = delete;    
     explicit CRAM(const auto& text,const int rewrite_blocks_,const int H) : 
-    freq(SIGMA,1),curr_tree(0),prev_tree(0),modify_cnt(0),block_size(MAX_BLOCK_SIZE/2),existCodeSpace(true){                
+    freq(SIGMA,1),curr_tree(0),prev_tree(0),modify_cnt(0),block_size(MAX_BLOCK_SIZE/2),existCodeSpace(true),bulk_rewrite_cnt(0){                
         total_block_num = text.size()/block_size;
         rewrite_blocks = rewrite_blocks_;
         rewrite_start_pos = rewrite_blocks==0 ? 0 : (text.size())*(rewrite_blocks-1)/rewrite_blocks;        
@@ -28,22 +28,43 @@ public:
         }        
         da = Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,encoders[0],H);        
     }    
-    void makeNewCode(const auto& vec){
+    
+    void makeNewCode(Ch ch){
         if(!existCodeSpace) return;
-        auto inserted_ch_vec = vec;
-        std::sort(inserted_ch_vec.begin(),inserted_ch_vec.end());
-        inserted_ch_vec.erase(std::unique(inserted_ch_vec.begin(),inserted_ch_vec.end()),inserted_ch_vec.end());
-        for(const auto ch:inserted_ch_vec){
-            int candidate_len = std::log2(total_block_num*block_size/freq[ch]);
-            if(pivotFreq[ch]*2 < freq[ch] && candidate_len < 16){
-                existCodeSpace = encoders[curr_tree].insertCode(ch,candidate_len);
-                pivotFreq[ch] = freq[ch];
-            }            
-            if(!existCodeSpace) break;
+        int candidate_len = std::log2(total_block_num*block_size/freq[ch]);
+        if(pivotFreq[ch]*2 < freq[ch] && candidate_len < 16){
+            existCodeSpace = encoders[curr_tree].insertCode(ch,candidate_len);
+            pivotFreq[ch] = freq[ch];
         }
+    }
+    void insert_bulkrewrite(index_t pos,Ch ch){                
+        if(!existCodeSpace){
+            ++bulk_rewrite_cnt;
+            std::cout<<"BULK REBUILD\n";
+            curr_tree^=1;            
+            encoders[curr_tree] = encoder_t(freq);            
+            index_t pos = 0;            
+            while(pos < da.size()){
+                const auto curr_block = da.block_at(pos,encoders[prev_tree]);
+                da.block_replace(pos,curr_block,encoders[curr_tree]);
+                pos+=curr_block.size();
+            }
+            prev_tree = curr_tree;
+            pivotFreq = freq;
+            existCodeSpace = true;
+        }
+        da.insert(pos,ch,encoders[curr_tree]);        
     }
     void insert(index_t pos,Ch ch){
         freq[ch]++;
+        if constexpr(0 < MODE){
+            makeNewCode(ch);
+        }
+        if(rewrite_blocks==0){
+            insert_bulkrewrite(pos,ch);
+            return;
+        }
+
         uint8_t tree_idx = pos < rewrite_start_pos ? curr_tree : prev_tree;
         da.insert(pos,ch,encoders[tree_idx]);
         ++modify_cnt;
@@ -60,7 +81,11 @@ public:
                 rewrite_start_pos = 0;
                 prev_tree = curr_tree;
                 curr_tree^=1;
-                encoders[curr_tree] = encoder_t(freq);                
+                encoders[curr_tree] = encoder_t(freq);              
+                if constexpr(0 < MODE){
+                    pivotFreq = freq;
+                    existCodeSpace = true;
+                }  
             }
         }
     }
@@ -104,8 +129,18 @@ public:
     auto get_bpc()const{
         return da.get_bpc();
     }
+    auto get_entropy() const{
+        const int n = da.size()+SIGMA;
+        return std::transform_reduce(freq.begin(),freq.end(),static_cast<double>(0),std::plus{},[n](const auto f){
+            const auto p = static_cast<double>(f)/n;
+            return -std::log2(p)*p;
+        })/2;
+    }
     auto size() const{
         return da.size();
+    }    
+    auto get_bulkcnt() const{
+        return bulk_rewrite_cnt;
     }
 
 
@@ -116,6 +151,7 @@ private:
 
     int prev_tree;
     int curr_tree;
+    int bulk_rewrite_cnt;
 
     index_t rewrite_start_pos;    
     index_t modify_cnt;

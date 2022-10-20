@@ -30,13 +30,13 @@ auto cram_replace_test(const auto& source,const auto& dest,const int rewrite_blo
 
     auto start = steady_clock::now();
     auto [node_bpc,block_bpc] = cram.get_bpc();
-    cout<<"PROGRESS: "<<0<<" CRAM NODE BPC: "<<node_bpc<<"CRAM BLOCK BPC: "<<block_bpc<<'\n';
+    cout<<"PROGRESS: "<<0<<" CRAM NODE BPC: "<<node_bpc<<"CRAM BLOCK BPC: "<<block_bpc<<" , ENTROPY: "<<cram.get_entropy()<<'\n';
     ret.push_back(node_bpc+block_bpc);
     for(int i=0;i<block_num;++i){        
         cram.replace(i,replace_data[i]);
         if((i+1)%(block_num/10)==0){
             auto [node_bpc,block_bpc] = cram.get_bpc();
-            cout<<"PROGRESS: "<<(i+1)/(block_num/10)*10<<" CRAM NODE BPC: "<<node_bpc<<"CRAM BLOCK BPC: "<<block_bpc<<'\n';            
+            cout<<"PROGRESS: "<<(i+1)/(block_num/10)*10<<" CRAM NODE BPC: "<<node_bpc<<"CRAM BLOCK BPC: "<<block_bpc<<" , ENTROPY: "<<cram.get_entropy()<<'\n';            
             ret.push_back(node_bpc+block_bpc);
         }
     }
