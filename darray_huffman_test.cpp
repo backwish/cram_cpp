@@ -132,7 +132,7 @@ void darray_huffman_erase_test(const auto& source){
         erase_time+=duration_cast<nanoseconds> (erase_end - erase_start).count();        
         //std::cout<<da.size()<<','<<erase_pos<<'\n';
     }    
-    std::cout<<"ERASE TIME: "<<erase_time<<'\n';    
+    std::cout<<"ERASE TIME: "<<erase_time/1000000<<'\n';    
 }
 
 
@@ -146,7 +146,7 @@ int main(int argc,char **argv){
     is_source.close();
 
     
-    if constexpr(false){
+    //if constexpr(false){
         std::ifstream is_dest(argv[2],std::ios::binary);
         is_dest.seekg(0, std::ios_base::end);
         size=is_dest.tellg();
@@ -154,11 +154,11 @@ int main(int argc,char **argv){
         std::vector<data_t> dest(size/sizeof(data_t));
         is_dest.read((char*) &dest[0], size);
         is_dest.close();
-    }
+    //}
 
     //darray_huffman_insert_test<64,2048,2>(source);
     std::cout<<"insert and erase test\n";
-    //darray_huffman_insert_erase_test_without_correctness_check<1024,2048,2>(source,dest);
+    darray_huffman_insert_erase_test_without_correctness_check<1024,2048,2>(source,dest);
     //darray_huffman_insert_erase_test_without_correctness_check<1024,64,4>(source,dest);    
     //darray_huffman_insert_erase_test_without_correctness_check<64,2048,2>(source,dest);
     //darray_huffman_insert_erase_test_without_correctness_check<64,64,4>(source,dest);        
