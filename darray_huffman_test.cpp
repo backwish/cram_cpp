@@ -36,11 +36,11 @@ void darray_huffman_insert_erase_test_without_correctness_check(const auto& sour
     }
     std::cout<<"TOTAL INSERT TIME: "<<insert_time/1000000<<'\n';
     std::cout<<"TOTAL ERASE TIME: "<<erase_time/1000000<<'\n';    
-    auto [block_insert_time,block_erase_time] = da.getBlockInsertEraseTime();
+    auto [block_insert_time,block_erase_time,block_merge_time,block_split_time] = da.getBlockInsertEraseTime();
     std::cout<<"BLOCK INSERT TIME: "<<block_insert_time/1000000<<'\n';
     std::cout<<"BLOCK ERASE TIME: "<<block_erase_time/1000000<<'\n';    
     std::cout<<"TREE INSERT TIME: "<<(insert_time-block_insert_time)/1000000<<'\n';
-    std::cout<<"TREE ERASE TIME: "<<(erase_time-block_erase_time)/1000000<<'\n';    
+    std::cout<<"TREE ERASE TIME: "<<(erase_time-block_erase_time)/1000000<<'\n';        
 }
 
 void correctness_check(const auto& da,const auto& raw_vector,const int MAX_BLOCK_SIZE){
@@ -132,7 +132,9 @@ void darray_huffman_erase_test(const auto& source){
         erase_time+=duration_cast<nanoseconds> (erase_end - erase_start).count();        
         //std::cout<<da.size()<<','<<erase_pos<<'\n';
     }    
+    auto [block_insert_time,block_erase_time,block_merge_time,block_split_time] = da.getBlockInsertEraseTime();    
     std::cout<<"ERASE TIME: "<<erase_time/1000000<<'\n';    
+    std::cout<<"BLOCK MERGE TIME: "<<block_merge_time/1000000<<'\n';
 }
 
 
@@ -158,18 +160,19 @@ int main(int argc,char **argv){
 
     //darray_huffman_insert_test<64,2048,2>(source);
     std::cout<<"insert and erase test\n";
-    darray_huffman_insert_erase_test_without_correctness_check<1024,2048,2>(source,dest);
-    darray_huffman_insert_erase_test_without_correctness_check<1024,64,4>(source,dest);    
-    //darray_huffman_insert_erase_test_without_correctness_check<64,2048,2>(source,dest);
-    //darray_huffman_insert_erase_test_without_correctness_check<64,64,4>(source,dest);        
+    //darray_huffman_insert_erase_test_without_correctness_check<1024,2048,2>(source,dest);
+    //darray_huffman_insert_erase_test_without_correctness_check<1024,64,4>(source,dest);    
+    darray_huffman_insert_erase_test_without_correctness_check<64,2048,2>(source,dest);
+    darray_huffman_insert_erase_test_without_correctness_check<64,64,4>(source,dest);            
 
-    const int mini_source_size = source.size()/1024;
+    
+    const int mini_source_size = source.size()/100;
     std::vector<data_t> mini_source(mini_source_size);
     std::copy(source.begin(),source.begin()+mini_source_size,mini_source.begin());
-    darray_huffman_insert_test<64,2048,2>(mini_source);    
-    darray_huffman_erase_test<64,2048,2>(mini_source);
+    //darray_huffman_insert_test<64,2048,2>(mini_source);    
+    darray_huffman_erase_test<64,64,4>(mini_source);
     //darray_huffman_insert_erase_test<1024,2048,1>(mini_source);
-    darray_huffman_insert_erase_test<1024,2048,2>(mini_source);
+    //darray_huffman_insert_erase_test<1024,2048,2>(mini_source);
     //darray_huffman_insert_erase_test<1024,64,4>(mini_source);    
     //darray_huffman_insert_erase_test<1024,16,6>(mini_source);    
 }

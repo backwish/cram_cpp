@@ -95,17 +95,20 @@ int main(int argc,char **argv){
     cout<<"CRAM INSERT TEST\n";
 
     const int N = source.size();
-    const int DIVIDE = 10;
+    const int DIVIDE = 100;
     const std::vector<data_t> mini_source{source.begin(),source.begin()+N/DIVIDE};
     const std::vector<data_t> mini_dest{dest.begin(),dest.begin()+N/DIVIDE};        
     cout<<"CH SIZE: "<<mini_source.size()<<'\n';        
     const std::vector<int> rewrite_blocks_vec_sada = {4,2,1};    
     const std::vector<int> rewrite_blocks_vec_icalp = {4,2,1,0};
+    constexpr int TEST_MAX_BLOCK_SIZE = 64;    
+    constexpr int TEST_SB_SHORT_SIZE = 2048;
+    constexpr int TEST_SB_TALL_SIZE = 64;
     
     for(int rewrite_blocks:rewrite_blocks_vec_sada){            
         cout<<"H: "<<1<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,0,1,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,0,1,TEST_MAX_BLOCK_SIZE,TEST_SB_SHORT_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -114,7 +117,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_sada){            
         cout<<"H: "<<2<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,0,2,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,0,2,TEST_MAX_BLOCK_SIZE,TEST_SB_SHORT_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -123,7 +126,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_sada){            
         cout<<"H: "<<4<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,0,4,1024,32>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,0,4,TEST_MAX_BLOCK_SIZE,TEST_SB_TALL_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -135,7 +138,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
         cout<<"H: "<<1<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,1,1,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,1,1,TEST_MAX_BLOCK_SIZE,TEST_SB_SHORT_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -145,7 +148,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
         cout<<"H: "<<2<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,1,2,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,1,2,TEST_MAX_BLOCK_SIZE,TEST_SB_SHORT_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -155,7 +158,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
         cout<<"H: "<<4<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,1,4,1024,32>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,1,4,TEST_MAX_BLOCK_SIZE,TEST_SB_TALL_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -167,7 +170,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
         cout<<"H: "<<1<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,2,1,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,2,1,TEST_MAX_BLOCK_SIZE,TEST_SB_SHORT_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -177,7 +180,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
         cout<<"H: "<<2<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,2,2,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,2,2,TEST_MAX_BLOCK_SIZE,TEST_SB_SHORT_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
@@ -187,7 +190,7 @@ int main(int argc,char **argv){
     for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
         cout<<"H: "<<4<<" BU: "<<rewrite_blocks<<'\n';
         out<<"u= "<<rewrite_blocks<<',';                
-        auto ret = cram_insert_test<code_t,data_t,2,4,1024,32>(mini_source,mini_dest,rewrite_blocks);            
+        auto ret = cram_insert_test<code_t,data_t,2,4,TEST_MAX_BLOCK_SIZE,TEST_SB_TALL_SIZE>(mini_source,mini_dest,rewrite_blocks);            
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }

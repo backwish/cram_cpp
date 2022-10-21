@@ -206,9 +206,14 @@ public:
             modifyPartialSum(node->size_psum_vec,pos,1);
             node->size_vec[pos]++;
         }
+        ++da_size;
+        const int leafblk_size = leaf->block_ptr_vec[leaf_pos]->size();
+        if(leafblk_size <= MAX_BLOCK_SIZE) return;
         
-        if(MAX_BLOCK_SIZE < leaf->block_ptr_vec[leaf_pos]->size()){
-            splitDataBlock(leaf,leaf_pos,encoder);            
+        auto split_start = steady_clock::now();
+        if(MAX_BLOCK_SIZE < leafblk_size){
+            
+            splitDataBlock(leaf,leaf_pos,encoder);                  
         }
         for(int i=H-1;i>0;--i){
             auto node = node_path[i];
@@ -217,10 +222,11 @@ public:
                 break;
             }
             auto parent_node = node_path[i-1];
-            auto parent_pos = child_pos_path[i-1];
+            auto parent_pos = child_pos_path[i-1];            
             splitNode(parent_node,parent_pos);
         }
-        ++da_size;
+        auto split_end = steady_clock::now();
+        split_time+=duration_cast<nanoseconds> (split_end - split_start).count();              
     }    
     void erase(index_t pos,const auto& encoder){
         const auto [node_path,child_pos_path,block_pos] = getPos(pos);
@@ -236,7 +242,14 @@ public:
             modifyPartialSum(node->size_psum_vec,pos,-1);
             node->size_vec[pos]--;
         }
-        if(leaf->block_ptr_vec[leaf_pos]->size() <= MAX_BLOCK_SIZE/4 && 1 < leaf->block_ptr_vec.size()){
+        --da_size;
+        const int leafblk_size = leaf->block_ptr_vec[leaf_pos]->size();
+        const int leaf_size = leaf->block_ptr_vec.size();
+        const bool is_merge = leafblk_size <= MAX_BLOCK_SIZE/4 && 1 < leaf_size;
+        if(!is_merge) return;
+
+        auto merge_start = steady_clock::now();        
+        if(is_merge){
             auto left_pos = (leaf_pos==0 ? leaf_pos : leaf_pos-1);
             auto right_pos = (leaf_pos==0 ? leaf_pos+1 : leaf_pos);
             mergeDataBlock(leaf,left_pos,right_pos,encoder);
@@ -262,10 +275,11 @@ public:
                 splitNode(parent_node,left_pos);
             }
         }
-        --da_size;
+        auto merge_end = steady_clock::now();
+        merge_time+=duration_cast<nanoseconds> (merge_end - merge_start).count();                      
     }
     auto size() const {return da_size;}
-    auto getBlockInsertEraseTime() const{return std::make_pair(insert_time,erase_time);}
+    auto getBlockInsertEraseTime() const{return std::make_tuple(insert_time,erase_time,merge_time,split_time);}
     void traversal() const {
         std::queue<std::tuple<node_t*,int,int>> q;
         q.push(std::make_tuple(root.get(),0,0));
@@ -382,7 +396,7 @@ private:
     }
     std::unique_ptr<node_t> root;
     index_t da_size;
-    long long insert_time = 0,erase_time = 0;
+    long long insert_time = 0,erase_time = 0,split_time = 0,merge_time = 0;
 };
 
 #endif 
