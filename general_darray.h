@@ -4,6 +4,7 @@
 #include "block.h"
 #include <iostream>
 #include <memory>
+#include <array>
 #include <queue>
 #include <stack>
 #include <vector>
@@ -76,12 +77,12 @@ public:
 
 };
 
-template<typename T,typename Ch,typename block_t,typename encoder_t,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 2048>
+template<typename T,typename Ch,typename block_t,typename encoder_t,int H,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 2048>
 class Darray{
 public:
     using index_t = int;
     using node_t = Node<T,Ch,index_t,block_t>;
-    Darray(const auto& text,const auto& encoder,const int H) : da_size(0),insert_time(0),erase_time(0){                
+    Darray(const auto& text,const auto& encoder) : da_size(0),insert_time(0),erase_time(0){                
         auto input_block_ptr_vec = make_blocks(text,encoder);
         const int n = input_block_ptr_vec.size();        
         const index_t INTERNAL_BLOCK_SIZE = H==1 ? n : MAX_INTERNAL_BLOCK_SIZE/2;
@@ -133,7 +134,7 @@ public:
         }
         root = std::move(node_queue.front());
     }
-    explicit Darray(const int H) : root(std::make_unique<node_t>(H==1,1)), da_size(0),insert_time(0),erase_time(0){
+    Darray() : root(std::make_unique<node_t>(H==1,1)), da_size(0),insert_time(0),erase_time(0){
         node_t *curr = root.get();
         for(int depth=2;depth<=H;++depth){
             auto first_child = std::make_unique<node_t>(depth==H,1);
@@ -142,21 +143,20 @@ public:
         }
         auto first_block = std::make_unique<block_t>();
         curr->block_ptr_vec.push_back(std::move(first_block));
-    }
-    Darray() = default;
+    }    
     
     //method for fixed-size CRAM
     auto block_at(index_t pos,const auto& encoder) const {
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
-        auto leaf = node_stack.top();
-        auto leaf_pos = child_pos_stack.top();
+        auto [node_path,child_pos_path,block_pos] = getPos(pos);
+        auto leaf = node_path[H-1];
+        auto leaf_pos = child_pos_path[H-1];
         auto ret = leaf->block_ptr_vec[leaf_pos]->get(encoder);        
         return ret;
     }
     auto block_replace(index_t pos,const auto& vec,const auto& encoder){
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
-        auto leaf = node_stack.top();
-        auto leaf_pos = child_pos_stack.top();        
+        auto [node_path,child_pos_path,block_pos] = getPos(pos);
+        auto leaf = node_path[H-1];
+        auto leaf_pos = child_pos_path[H-1];
         leaf->block_ptr_vec[leaf_pos]->replace_block(vec,encoder);
     }
     //end methods
@@ -187,57 +187,52 @@ public:
         return std::make_pair(node_bpc,block_bpc);
     }
     auto at(index_t pos,const auto& encoder) const{
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
-        auto leaf = node_stack.top();
-        auto leaf_pos = child_pos_stack.top();
+        auto [node_path,child_pos_path,block_pos] = getPos(pos);
+        auto leaf = node_path[H-1];
+        auto leaf_pos = child_pos_path[H-1];
         return leaf->block_ptr_vec[leaf_pos]->at(block_pos,encoder);        
     }
     void insert(index_t pos,auto val,const auto& encoder){
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);        
-        auto leaf = node_stack.top();
-        auto leaf_pos = child_pos_stack.top();
+        const auto [node_path,child_pos_path,block_pos] = getPos(pos);
+        auto leaf = node_path[H-1];
+        auto leaf_pos = child_pos_path[H-1];
         auto insert_start = steady_clock::now();
         leaf->block_ptr_vec[leaf_pos]->insert(block_pos,val,encoder);
         auto insert_end = steady_clock::now();
         insert_time+=duration_cast<nanoseconds> (insert_end - insert_start).count();
-        auto node_stack_temp = node_stack;
-        auto child_pos_stack_temp = child_pos_stack;
-        while(!node_stack_temp.empty()){
-            auto node = node_stack_temp.top();node_stack_temp.pop();
-            auto pos = child_pos_stack_temp.top();child_pos_stack_temp.pop();
+        for(int i=H-1;i>=0;--i){
+            auto node = node_path[i];
+            auto pos = child_pos_path[i];
             modifyPartialSum(node->size_psum_vec,pos,1);
-            node->size_vec[pos]++;            
+            node->size_vec[pos]++;
         }
         
         if(MAX_BLOCK_SIZE < leaf->block_ptr_vec[leaf_pos]->size()){
             splitDataBlock(leaf,leaf_pos,encoder);            
         }
-        while(1 < node_stack.size()){
-            auto node = node_stack.top();node_stack.pop();
-            auto pos = child_pos_stack.top();child_pos_stack.pop();
+        for(int i=H-1;i>0;--i){
+            auto node = node_path[i];
+            auto pos = child_pos_path[i];
             if(node->size_vec.size() <= MAX_INTERNAL_BLOCK_SIZE){
                 break;
             }
-            auto parent_node = node_stack.top();
-            auto parent_pos = child_pos_stack.top();
-            splitNode(parent_node,parent_pos);            
+            auto parent_node = node_path[i-1];
+            auto parent_pos = child_pos_path[i-1];
+            splitNode(parent_node,parent_pos);
         }
         ++da_size;
     }    
     void erase(index_t pos,const auto& encoder){
-        auto [node_stack,child_pos_stack,block_pos] = getPos(pos);
-        auto leaf = node_stack.top();
-        auto leaf_pos = child_pos_stack.top();
+        const auto [node_path,child_pos_path,block_pos] = getPos(pos);
+        auto leaf = node_path[H-1];
+        auto leaf_pos = child_pos_path[H-1];
         auto erase_start = steady_clock::now();        
         leaf->block_ptr_vec[leaf_pos]->erase(block_pos,encoder);
         auto erase_end = steady_clock::now();
         erase_time+=duration_cast<nanoseconds> (erase_end - erase_start).count();        
-        auto node_stack_temp = node_stack;
-        auto child_pos_stack_temp = child_pos_stack;
-        //std::cout<<pos<<','<<block_pos<<'\n';
-        while(!node_stack_temp.empty()){
-            auto node = node_stack_temp.top();node_stack_temp.pop();
-            auto pos = child_pos_stack_temp.top();child_pos_stack_temp.pop();
+        for(int i=H-1;i>=0;--i){
+            auto node = node_path[i];
+            auto pos = child_pos_path[i];
             modifyPartialSum(node->size_psum_vec,pos,-1);
             node->size_vec[pos]--;
         }
@@ -249,14 +244,14 @@ public:
                 splitDataBlock(leaf,left_pos,encoder);
             }
         }
-        while(1 < node_stack.size()){
-            auto node = node_stack.top();node_stack.pop();
-            auto pos = child_pos_stack.top();child_pos_stack.pop();
+        for(int i=H-1;i>0;--i){
+            auto node = node_path[i];
+            auto pos = child_pos_path[i];
             if(MAX_INTERNAL_BLOCK_SIZE/4 < node->size_vec.size()){
                 break;
             }
-            auto parent_node = node_stack.top();
-            auto parent_pos = child_pos_stack.top();
+            auto parent_node = node_path[i-1];
+            auto parent_pos = child_pos_path[i-1];
             if(parent_node->size_vec.size() <= 1){
                 break;
             }
@@ -314,25 +309,20 @@ private:
     auto getPos(index_t total_pos) const {
         node_t *curr = root.get();
         int block_pos = -1;        
-        std::stack<node_t*> node_stack;
-        std::stack<index_t> child_pos_stack;        
-        while(true){
-            auto psum_block_it = std::upper_bound(curr->size_psum_vec.cbegin(),curr->size_psum_vec.cend(),total_pos);
-            assert(psum_block_it!=curr->size_psum_vec.end());
-            auto pos = std::distance(curr->size_psum_vec.cbegin(),psum_block_it);
-            auto offset = pos==0 ? 0 : curr->size_psum_vec[pos-1];                          
+        std::array<node_t*,H> node_path;
+        std::array<index_t,H> child_pos_path;        
+        for(int i=0;i<H;++i){
+            const auto psum_block_it = std::upper_bound(curr->size_psum_vec.cbegin(),curr->size_psum_vec.cend(),total_pos);
+            const auto pos = std::distance(curr->size_psum_vec.cbegin(),psum_block_it);
+            const auto offset = pos==0 ? 0 : curr->size_psum_vec[pos-1];                          
             total_pos-=offset;
-            node_stack.push(curr);
-            child_pos_stack.push(pos);            
-            if(curr->is_leaf){
-                block_pos = total_pos;                
-                break;
-            }else{
-                curr = curr->child_vec[pos].get();
-            }
+            node_path[i] = curr;
+            child_pos_path[i] = pos;
+            block_pos = total_pos;
+            curr = i+1 < H ? curr->child_vec[pos].get() : nullptr;
         }        
         assert(block_pos>=0);
-        return std::make_tuple(std::move(node_stack),std::move(child_pos_stack),block_pos);
+        return std::make_tuple(node_path,child_pos_path,block_pos);
     }
     void splitDataBlock(auto leaf,index_t leaf_pos,const auto& encoder){
         index_t left_size = MAX_BLOCK_SIZE/2+1,right_size = leaf->block_ptr_vec[leaf_pos]->size() - left_size;

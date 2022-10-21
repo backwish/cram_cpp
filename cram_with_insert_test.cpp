@@ -13,11 +13,11 @@ using freq_t = int;
 const int SIGMA = 65536;
 const bool DEBUG_CRAM_INSERT = false;
 
-template<typename T,typename Ch,int MODE,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
-auto cram_insert_test(const auto& source,const auto& dest,const int rewrite_blocks,const int H){
+template<typename T,typename Ch,int MODE,int H,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
+auto cram_insert_test(const auto& source,const auto& dest,const int rewrite_blocks){
     assert(source.size()%(MAX_BLOCK_SIZE/2) == 0);
     cout<<"CRAM BUILD START\n";
-    CRAM<T,Ch,MODE,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> cram(source,rewrite_blocks,H);
+    CRAM<T,Ch,MODE,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> cram(source,rewrite_blocks);
     cout<<"CRAM BUILD END\n";
     std::vector<data_t> raw_vector{source.begin(),source.end()};        
     std::vector<double> ret;
@@ -92,59 +92,105 @@ int main(int argc,char **argv){
     is_dest.close();
 
     std::ofstream out("test.csv");
-    cout<<"CRAM REPLACE TEST\n";
+    cout<<"CRAM INSERT TEST\n";
 
     const int N = source.size();
     const int DIVIDE = 10;
     const std::vector<data_t> mini_source{source.begin(),source.begin()+N/DIVIDE};
     const std::vector<data_t> mini_dest{dest.begin(),dest.begin()+N/DIVIDE};        
-    cout<<"CH SIZE: "<<mini_source.size()<<'\n';    
-    const std::vector<int> height_vec = {1,2,4};
+    cout<<"CH SIZE: "<<mini_source.size()<<'\n';        
     const std::vector<int> rewrite_blocks_vec_sada = {4,2,1};    
     const std::vector<int> rewrite_blocks_vec_icalp = {4,2,1,0};
-    for(int H:height_vec){
-        for(int rewrite_blocks:rewrite_blocks_vec_sada){            
-            cout<<"H: "<<H<<" BU: "<<rewrite_blocks<<'\n';
-            out<<"u= "<<rewrite_blocks<<',';
-            std::vector<double> ret;
-            if(H==4) ret = cram_insert_test<code_t,data_t,0,1024,32>(mini_source,mini_dest,rewrite_blocks,H);
-            else ret = cram_insert_test<code_t,data_t,0,1024,2048>(mini_source,mini_dest,rewrite_blocks,H);            
-            for(auto col:ret) out<<col<<',';
-            out<<'\n';
-        }
-        out<<'\n';
-        out<<'\n';
-    }
-    out<<'\n';out<<'\n';out<<'\n';
-
-    for(int H:height_vec){
-        for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
-            cout<<"H: "<<H<<" BU: "<<rewrite_blocks<<'\n';
-            out<<"u= "<<rewrite_blocks<<',';
-            std::vector<double> ret;
-            if(H==4) ret = cram_insert_test<code_t,data_t,1,1024,32>(mini_source,mini_dest,rewrite_blocks,H);
-            else ret = cram_insert_test<code_t,data_t,1,1024,2048>(mini_source,mini_dest,rewrite_blocks,H);            
-            for(auto col:ret) out<<col<<',';
-            out<<'\n';
-        }
-        out<<'\n';
-        out<<'\n';
-    }
-    out<<'\n';out<<'\n';out<<'\n';
-    for(int H:height_vec){
-        for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
-            cout<<"H: "<<H<<" BU: "<<rewrite_blocks<<'\n';
-            out<<"u= "<<rewrite_blocks<<',';
-            std::vector<double> ret;
-            if(H==4) ret = cram_insert_test<code_t,data_t,2,1024,32>(mini_source,mini_dest,rewrite_blocks,H);
-            else ret = cram_insert_test<code_t,data_t,2,1024,2048>(mini_source,mini_dest,rewrite_blocks,H);            
-            for(auto col:ret) out<<col<<',';
-            out<<'\n';
-        }
-        out<<'\n';
-        out<<'\n';
-    }
-    out<<'\n';out<<'\n';out<<'\n';
-
     
+    for(int rewrite_blocks:rewrite_blocks_vec_sada){            
+        cout<<"H: "<<1<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,0,1,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+    for(int rewrite_blocks:rewrite_blocks_vec_sada){            
+        cout<<"H: "<<2<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,0,2,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+    for(int rewrite_blocks:rewrite_blocks_vec_sada){            
+        cout<<"H: "<<4<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,0,4,1024,32>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+    
+    out<<'\n';out<<'\n';out<<'\n';
+
+    for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
+        cout<<"H: "<<1<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,1,1,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+
+    for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
+        cout<<"H: "<<2<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,1,2,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+
+    for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
+        cout<<"H: "<<4<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,1,4,1024,32>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+
+    out<<'\n';out<<'\n';out<<'\n';
+
+    for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
+        cout<<"H: "<<1<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,2,1,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+
+    for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
+        cout<<"H: "<<2<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,2,2,1024,2048>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
+
+    for(int rewrite_blocks:rewrite_blocks_vec_icalp){            
+        cout<<"H: "<<4<<" BU: "<<rewrite_blocks<<'\n';
+        out<<"u= "<<rewrite_blocks<<',';                
+        auto ret = cram_insert_test<code_t,data_t,2,4,1024,32>(mini_source,mini_dest,rewrite_blocks);            
+        for(auto col:ret) out<<col<<',';
+        out<<'\n';
+    }
+    out<<'\n';
+    out<<'\n';
 }

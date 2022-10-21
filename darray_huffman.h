@@ -5,7 +5,7 @@
 #include "encoder.h"
 const int SIGMA = 65536;
 
-template<int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
+template<int H,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
 class Darray_Huffman{
 public:
     using code_t = uint64_t;
@@ -14,14 +14,14 @@ public:
     using encoder_t = HuffmanEncoder<>;
     using freq_t = int;
     using index_t = int;    
-    explicit Darray_Huffman(const auto& text,const int H,bool init) : freq(SIGMA,1){
+    explicit Darray_Huffman(const auto& text,bool init) : freq(SIGMA,1){
         int n = text.size();
         for(const auto ch:text){ freq[ch]++; }
         huffman_encoder = encoder_t(freq);
         if(init){            
-            da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,huffman_encoder,H);
+            da = Darray<code_t,ch_t,block_t,encoder_t,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,huffman_encoder);
         }else{
-            da = Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(H);
+            da = Darray<code_t,ch_t,block_t,encoder_t,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>{};
         }
     }
     void insert(index_t pos,auto val){
@@ -60,7 +60,7 @@ private:
     }*/
     std::vector<freq_t> freq;
     encoder_t huffman_encoder;
-    Darray<code_t,ch_t,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
+    Darray<code_t,ch_t,block_t,encoder_t,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
 };
 
 

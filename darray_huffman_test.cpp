@@ -13,7 +13,7 @@ using freq_t = int;
 const int N = 100000;
 template<int MAX_BLOCK_SIZE,int MAX_INTERNAL_BLOCK_SIZE,int H>
 void darray_huffman_insert_erase_test_without_correctness_check(const auto& source,const auto& dest){
-    Darray_Huffman<MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,H,true);    
+    Darray_Huffman<H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,true);    
 
     long long insert_time = 0,erase_time = 0;
     std::cout<<"INSERT TEST START\n";
@@ -61,7 +61,7 @@ void correctness_check(const auto& da,const auto& raw_vector,const int MAX_BLOCK
 
 template<int MAX_BLOCK_SIZE,int MAX_INTERNAL_BLOCK_SIZE,int H>
 void darray_huffman_insert_erase_test(const auto& source){
-    Darray_Huffman<MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,H,true);
+    Darray_Huffman<H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,true);
     std::vector<data_t> raw_vector(source.size());
     std::copy(source.begin(),source.end(),raw_vector.begin());
 
@@ -95,7 +95,7 @@ void darray_huffman_insert_erase_test(const auto& source){
 
 template<int MAX_BLOCK_SIZE,int MAX_INTERNAL_BLOCK_SIZE,int H>
 void darray_huffman_insert_test(const auto& source){
-    Darray_Huffman<MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,H,false);
+    Darray_Huffman<H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,false);
     const int N = source.size();
     std::cout<<"TEST SIZE: "<<N<<'\n';    
     std::vector<data_t> raw_vector;    
@@ -118,7 +118,7 @@ void darray_huffman_insert_test(const auto& source){
 }
 template<int MAX_BLOCK_SIZE,int MAX_INTERNAL_BLOCK_SIZE,int H>
 void darray_huffman_erase_test(const auto& source){
-    Darray_Huffman<MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,H,true);
+    Darray_Huffman<H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da(source,true);
     std::vector<data_t> raw_vector(source.size());
     std::copy(source.begin(),source.end(),raw_vector.begin());    
     const int N = source.size();
@@ -159,7 +159,7 @@ int main(int argc,char **argv){
     //darray_huffman_insert_test<64,2048,2>(source);
     std::cout<<"insert and erase test\n";
     darray_huffman_insert_erase_test_without_correctness_check<1024,2048,2>(source,dest);
-    //darray_huffman_insert_erase_test_without_correctness_check<1024,64,4>(source,dest);    
+    darray_huffman_insert_erase_test_without_correctness_check<1024,64,4>(source,dest);    
     //darray_huffman_insert_erase_test_without_correctness_check<64,2048,2>(source,dest);
     //darray_huffman_insert_erase_test_without_correctness_check<64,64,4>(source,dest);        
 

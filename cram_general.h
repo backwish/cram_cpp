@@ -6,14 +6,14 @@
 using std::cout;
 using std::cin;
 
-template<typename T,typename Ch,int MODE,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024,int SIGMA = 65536>
+template<typename T,typename Ch,int MODE,int H,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024,int SIGMA = 65536>
 class CRAM{
 public:
     using index_t = int;
     using block_t = HuffmanBlock<T,Ch>;
     using encoder_t = HuffmanEncoder<T,Ch,MODE>;
     CRAM() = delete;    
-    explicit CRAM(const auto& text,const int rewrite_blocks_,const int H) : 
+    explicit CRAM(const auto& text,const int rewrite_blocks_) : 
     freq(SIGMA,1),tree_num_vec(text.size()/(MAX_BLOCK_SIZE/2)),curr_tree(0),block_size(MAX_BLOCK_SIZE/2),existCodeSpace(true){                
         total_block_num = text.size()/block_size;
         rewrite_blocks = rewrite_blocks_;
@@ -26,7 +26,7 @@ public:
             pivotFreq.resize(SIGMA);
             std::copy(freq.begin(),freq.end(),pivotFreq.begin());
         }        
-        da = Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,encoders[0],H);        
+        da = Darray<T,Ch,block_t,encoder_t,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE>(text,encoders[0]);        
     }
     auto make_huffman_blocks(const auto& text,const auto& encoder){
         int n = text.size();
@@ -113,7 +113,7 @@ private:
     std::vector<int> pivotFreq;
     std::vector<uint8_t> tree_num_vec;
     encoder_t encoders[2];
-    Darray<T,Ch,block_t,encoder_t,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
+    Darray<T,Ch,block_t,encoder_t,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;
 };
 
 #endif

@@ -12,11 +12,11 @@ using data_t = uint16_t;
 using freq_t = int;
 const int SIGMA = 65536;
 
-template<typename T,typename Ch,int MODE,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
-auto cram_replace_test(const auto& source,const auto& dest,const int rewrite_blocks,const int H){
+template<typename T,typename Ch,int MODE,int H,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 1024>
+auto cram_replace_test(const auto& source,const auto& dest,const int rewrite_blocks){
     assert(source.size()%(MAX_BLOCK_SIZE/2) == 0);
     cout<<"CRAM BUILD START\n";
-    CRAM<T,Ch,MODE,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> cram(source,rewrite_blocks,H);
+    CRAM<T,Ch,MODE,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> cram(source,rewrite_blocks);
     cout<<"CRAM BUILD END\n";
     std::vector<std::vector<data_t>> replace_data;
     for(int i=0;i<dest.size();i+=MAX_BLOCK_SIZE/2){        
@@ -81,17 +81,17 @@ int main(int argc,char **argv){
 
     int rewrite_blocks = 4;        
     for(int rewrite_blocks=4;rewrite_blocks>=1;rewrite_blocks/=2){
-        auto ret = cram_replace_test<code_t,data_t,0,1024,2048>(source,dest,rewrite_blocks,2);
+        auto ret = cram_replace_test<code_t,data_t,0,2,1024,2048>(source,dest,rewrite_blocks);
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
     for(int rewrite_blocks=4;rewrite_blocks>=1;rewrite_blocks/=2){
-        auto ret = cram_replace_test<code_t,data_t,1,1024,2048>(source,dest,rewrite_blocks,2);
+        auto ret = cram_replace_test<code_t,data_t,1,2,1024,2048>(source,dest,rewrite_blocks);
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
     for(int rewrite_blocks=4;rewrite_blocks>=1;rewrite_blocks/=2){
-        auto ret = cram_replace_test<code_t,data_t,2,1024,2048>(source,dest,rewrite_blocks,2);
+        auto ret = cram_replace_test<code_t,data_t,2,2,1024,2048>(source,dest,rewrite_blocks);
         for(auto col:ret) out<<col<<',';
         out<<'\n';
     }
