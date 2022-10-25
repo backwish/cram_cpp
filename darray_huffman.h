@@ -45,19 +45,7 @@ public:
 
 
 private:
-    /*auto make_huffman_blocks(const auto& text,const auto& encoder){
-        int n = text.size();
-        const int block_size = MAX_BLOCK_SIZE/2;
-        std::vector<std::unique_ptr<block_t>> ret;
-        for(int i=0;i<n;i+=block_size){
-            int curr_block_size = std::min(n-i,block_size);
-            std::vector<ch_t> curr_block(curr_block_size);
-            std::copy(text.begin()+i,text.begin()+(i+curr_block_size),curr_block.begin());
-            auto block_ptr = std::make_unique<block_t>(std::move(curr_block),encoder);
-            ret.push_back(std::move(block_ptr));
-        }
-        return std::move(ret);
-    }*/
+    
     std::vector<freq_t> freq;
     encoder_t huffman_encoder;
     Darray<code_t,ch_t,block_t,encoder_t,H,MAX_BLOCK_SIZE,MAX_INTERNAL_BLOCK_SIZE> da;

@@ -4,6 +4,7 @@
 #include "block.h"
 #include <iostream>
 #include <memory>
+#include <ranges>
 #include <array>
 #include <queue>
 #include <stack>
@@ -73,8 +74,6 @@ public:
     std::vector<index_t> size_psum_vec;
     std::vector<std::unique_ptr<node_t>> child_vec;
     std::vector<std::unique_ptr<block_t>> block_ptr_vec;
-    //friend class Darray;
-
 };
 
 template<typename T,typename Ch,typename block_t,typename encoder_t,int H,int MAX_BLOCK_SIZE = 1024,int MAX_INTERNAL_BLOCK_SIZE = 2048>
@@ -86,53 +85,64 @@ public:
         auto input_block_ptr_vec = make_blocks(text,encoder);
         const int n = input_block_ptr_vec.size();        
         const index_t INTERNAL_BLOCK_SIZE = H==1 ? n : MAX_INTERNAL_BLOCK_SIZE/2;
-        const index_t BLOCK_SIZE = MAX_BLOCK_SIZE/2;
+        const index_t BLOCK_SIZE = MAX_BLOCK_SIZE/2;        
         da_size = n*BLOCK_SIZE;
-        std::queue<std::unique_ptr<node_t>> node_queue;
+        //std::queue<std::unique_ptr<node_t>> node_queue;
+
+        const index_t leaf_node_size = (n+INTERNAL_BLOCK_SIZE-1)/INTERNAL_BLOCK_SIZE;
+        std::vector<std::unique_ptr<node_t>> node_vec(leaf_node_size);
         for(int i=0;i<n;i+=INTERNAL_BLOCK_SIZE){
             auto internal_block_size = std::min(n-i,INTERNAL_BLOCK_SIZE);   
             const bool last = n <= i+INTERNAL_BLOCK_SIZE;           
             std::vector<index_t> size_vec(internal_block_size);
             std::vector<index_t> size_psum_vec(internal_block_size);
-            std::vector<std::unique_ptr<block_t>> block_ptr_vec;            
-            for(int j=0;j<internal_block_size;++j){                
+            std::vector<std::unique_ptr<block_t>> block_ptr_vec(internal_block_size);        
+            auto inner_r = std::views::iota(0,internal_block_size);
+            std::for_each(std::execution::unseq,inner_r.begin(),inner_r.end(),
+            [&input_block_ptr_vec,&block_ptr_vec,&size_vec,i](auto j){
                 auto block_ptr = std::move(input_block_ptr_vec[i+j]);                
                 size_vec[j] = block_ptr->size();                
-                block_ptr_vec.push_back(std::move(block_ptr));
-            }            
+                block_ptr_vec[j] = std::move(block_ptr);                
+            });                
             if(last) size_vec.back()++;
             std::inclusive_scan(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
             auto node = std::make_unique<node_t>(true);
             node->size_vec = std::move(size_vec);
             node->size_psum_vec = std::move(size_psum_vec);
-            node->block_ptr_vec = std::move(block_ptr_vec);
-            node_queue.push(std::move(node));
-        }
+            node->block_ptr_vec = std::move(block_ptr_vec);            
+            node_vec[i/INTERNAL_BLOCK_SIZE] = std::move(node);            
+        }        
         for(int h=1;h<H;++h){
-            const int internal_node_num = node_queue.size();
+            //const int internal_node_num = node_queue.size();
+            const index_t internal_node_num = node_vec.size();
             const index_t INTERNAL_BLOCK_SIZE = h==H-1 ? internal_node_num : MAX_INTERNAL_BLOCK_SIZE/2;
-            std::queue<std::unique_ptr<node_t>> upper_node_queue;
+            const index_t upper_node_size = (internal_node_num+INTERNAL_BLOCK_SIZE-1)/INTERNAL_BLOCK_SIZE;
+            std::vector<std::unique_ptr<node_t>> upper_node_vec(upper_node_size);
+            //std::queue<std::unique_ptr<node_t>> upper_node_queue;
             for(int i=0;i<internal_node_num;i+=INTERNAL_BLOCK_SIZE){
                 auto internal_block_size = std::min(internal_node_num-i,INTERNAL_BLOCK_SIZE);
                 std::vector<index_t> size_vec(internal_block_size);
                 std::vector<index_t> size_psum_vec(internal_block_size);
-                std::vector<std::unique_ptr<node_t>> child_vec;
-                for(int j=0;j<internal_block_size;++j){
-                    auto node_ptr = std::move(node_queue.front());
-                    node_queue.pop();
+                std::vector<std::unique_ptr<node_t>> child_vec(internal_block_size);
+                auto inner_r = std::views::iota(0,internal_block_size);
+                std::for_each(std::execution::unseq,inner_r.begin(),inner_r.end(),
+                [&node_vec,&size_vec,&child_vec,i](auto j){
+                    auto node_ptr = std::move(node_vec[i+j]);                    
                     size_vec[j] = node_ptr->size_psum_vec.back();
-                    child_vec.push_back(std::move(node_ptr));
-                }
+                    child_vec[j] = std::move(node_ptr);                    
+                });                
                 std::inclusive_scan(size_vec.begin(),size_vec.end(),size_psum_vec.begin());
                 auto node = std::make_unique<node_t>(false);
                 node->size_vec = std::move(size_vec);
                 node->size_psum_vec = std::move(size_psum_vec);
                 node->child_vec = std::move(child_vec);
-                upper_node_queue.push(std::move(node));
+                upper_node_vec[i/INTERNAL_BLOCK_SIZE] = std::move(node);                
             }
-            node_queue = std::move(upper_node_queue);
+            node_vec.clear();
+            node_vec = std::move(upper_node_vec);            
         }
-        root = std::move(node_queue.front());
+        assert(node_vec.size()==1);
+        root = std::move(node_vec.front());
     }
     Darray() : root(std::make_unique<node_t>(H==1,1)), da_size(0),insert_time(0),erase_time(0){
         node_t *curr = root.get();
@@ -211,8 +221,7 @@ public:
         if(leafblk_size <= MAX_BLOCK_SIZE) return;
         
         auto split_start = steady_clock::now();
-        if(MAX_BLOCK_SIZE < leafblk_size){
-            
+        if(MAX_BLOCK_SIZE < leafblk_size){            
             splitDataBlock(leaf,leaf_pos,encoder);                  
         }
         for(int i=H-1;i>0;--i){

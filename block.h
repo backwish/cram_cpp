@@ -161,8 +161,8 @@ public:
         const int block_bits = sizeof(T)*8;        
         T curr_code = *block_vec_iter,next_code = (std::next(block_vec_iter) == block_vec.end() ? 0 : *std::next(block_vec_iter));
         for(int i=0;i<start_shift_idx;++i){
-            auto block_index = comp_pos/block_bits;
-            auto block_offset = comp_pos%block_bits;            
+            const auto block_index = comp_pos/block_bits;
+            const auto block_offset = comp_pos%block_bits;            
             auto code = curr_code<<block_offset;        
             code |= (next(block_vec_iter) == block_vec.end() || block_offset==0 ? 0 : next_code>>(block_bits - block_offset));
             auto [ch,len] = encoder.decode(code);

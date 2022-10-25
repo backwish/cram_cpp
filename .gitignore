@@ -3,3 +3,11 @@
 build/
 
 data/
+
+*.gitignore
+
+*.stackdump
+
+*.csv
+
+.vscode/

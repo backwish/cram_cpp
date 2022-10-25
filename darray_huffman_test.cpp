@@ -49,7 +49,7 @@ void correctness_check(const auto& da,const auto& raw_vector,const int MAX_BLOCK
     while(pos < N){
         const auto da_block = da.block_at(pos);
         const int block_size = da_block.size();
-        assert(block_size < MAX_BLOCK_SIZE);
+        assert(block_size <= MAX_BLOCK_SIZE);
         const std::vector<data_t> raw_block{raw_vector.begin()+pos,raw_vector.begin()+(pos+block_size)};        
         if(!std::equal(da_block.begin(),da_block.end(),raw_block.begin(),raw_block.end())){
             std::cout<<"not equal at: "<<pos<<" ,block size: "<<block_size<<'\n';
@@ -166,12 +166,12 @@ int main(int argc,char **argv){
     darray_huffman_insert_erase_test_without_correctness_check<64,64,4>(source,dest);            
 
     
-    const int mini_source_size = source.size()/100;
+    const int mini_source_size = source.size()/1024;
     std::vector<data_t> mini_source(mini_source_size);
     std::copy(source.begin(),source.begin()+mini_source_size,mini_source.begin());
-    //darray_huffman_insert_test<64,2048,2>(mini_source);    
+    darray_huffman_insert_test<64,2048,2>(mini_source);    
     darray_huffman_erase_test<64,64,4>(mini_source);
-    //darray_huffman_insert_erase_test<1024,2048,1>(mini_source);
+    darray_huffman_insert_erase_test<64,2048,2>(mini_source);
     //darray_huffman_insert_erase_test<1024,2048,2>(mini_source);
     //darray_huffman_insert_erase_test<1024,64,4>(mini_source);    
     //darray_huffman_insert_erase_test<1024,16,6>(mini_source);    

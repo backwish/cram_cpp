@@ -95,7 +95,7 @@ int main(int argc,char **argv){
     cout<<"CRAM INSERT TEST\n";
 
     const int N = source.size();
-    const int DIVIDE = 100;
+    const int DIVIDE = 10;
     const std::vector<data_t> mini_source{source.begin(),source.begin()+N/DIVIDE};
     const std::vector<data_t> mini_dest{dest.begin(),dest.begin()+N/DIVIDE};        
     cout<<"CH SIZE: "<<mini_source.size()<<'\n';        
