@@ -1,0 +1,71 @@
+[33mcommit 924ac612f461eb3a0025ec6c62cd544026927988[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m)[m
+Author: backwish <backwish1@gmail.com>
+Date:   Tue Oct 25 16:27:33 2022 +0900
+
+    gitignore update
+
+[33mcommit a7a717aaf5c67ec451e8ebd1cd5333fe7dd354d0[m
+Author: backwish <backwish1@gmail.com>
+Date:   Sat Oct 22 07:44:41 2022 +0900
+
+    test block size as parameter
+
+[33mcommit bd12a0e5c9e1fbd5926012bf91fa1767b951c3ea[m
+Author: backwish <backwish1@gmail.com>
+Date:   Sat Oct 22 07:03:28 2022 +0900
+
+    optimize getpos
+
+[33mcommit c620943389400c3a4661dc790ad2edaa4cbbc954[m
+Author: backwish <backwish1@gmail.com>
+Date:   Fri Oct 21 07:12:35 2022 +0900
+
+    update insert test
+
+[33mcommit 2c0d2af6054ed1358856a75c857be6402666779a[m
+Author: backwish <backwish1@gmail.com>
+Date:   Thu Oct 20 14:36:20 2022 +0900
+
+    opt insert erase and make insert cram
+
+[33mcommit 9e2508bc7ebc7620db8826987a1e95c6f6efce90[m
+Author: backwish <backwish1@gmail.com>
+Date:   Wed Oct 19 15:28:14 2022 +0900
+
+    detached dummy ch
+
+[33mcommit e5da0b6a24bbf5cfe2a041506859b4a6d13d3349[m
+Author: backwish <backwish1@gmail.com>
+Date:   Wed Oct 19 11:49:38 2022 +0900
+
+    attached dummy ch
+
+[33mcommit 240dcf75d4425d014c33b42cc373bf5b4e7772e7[m
+Author: backwish <backwish1@gmail.com>
+Date:   Tue Oct 18 21:41:14 2022 +0900
+
+    add benchmark tools
+
+[33mcommit 2990150b7cbb3310e1eec101d92f44ce8817ab63[m
+Author: backwish <backwish1@gmail.com>
+Date:   Mon Oct 17 07:51:04 2022 +0900
+
+    some std modification
+
+[33mcommit 585c7251789db0ebaeed622ebfa71d6cf314cc34[m
+Author: backwish <backwish1@gmail.com>
+Date:   Sun Oct 16 10:09:36 2022 +0900
+
+    add huffman variant
+
+[33mcommit f69e76eea2bd7e84f7213af4db197c7c29154c1b[m
+Author: backwish <backwish1@gmail.com>
+Date:   Sat Oct 15 13:27:09 2022 +0900
+
+    huffman_darray
+
+[33mcommit 833e582be03913201c31a99c6425a2c8d468ff66[m
+Author: backwish <backwish1@gmail.com>
+Date:   Sat Oct 15 07:44:37 2022 +0900
+
+    initial commit
